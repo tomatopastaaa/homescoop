@@ -28,7 +28,7 @@ export default function SGPage() {
     const [firmsRes, designersRes] = await Promise.all([
       supabase.from('firms').select(`
         *, reviews(*)
-      `).eq('market_id', 'sg').eq('reviews.status', 'approved').order('review_count', { ascending: false }),
+      `).eq('market_id', 'sg').in('reviews.status', ['pending','approved']).order('review_count', { ascending: false }),
       supabase.from('designers').select(`
         *, reviews(*), firm_history:designer_firm_history(*)
       `).eq('market_id', 'sg').order('created_at', { ascending: false }),
