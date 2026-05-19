@@ -26,10 +26,10 @@ export default function SGPage() {
     setLoading(true)
     const [firmsRes, designersRes] = await Promise.all([
       supabase.from('firms').select(`
-        *, reviews(*, author_id, planning_rating, execution_rating)
+        *, reviews(*, author_id, planning_rating, execution_rating, designers(name))
       `).eq('market_id', 'sg').order('review_count', { ascending: false }),
       supabase.from('designers').select(`
-        *, reviews(*, author_id, planning_rating, execution_rating), firm_history:designer_firm_history(*)
+        *, reviews(*, author_id, planning_rating, execution_rating, designers(name)), firm_history:designer_firm_history(*)
       `).eq('market_id', 'sg').order('created_at', { ascending: false }),
     ])
     setFirms(firmsRes.data || [])
