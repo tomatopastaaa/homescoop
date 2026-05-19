@@ -100,7 +100,7 @@ function ReviewsManager() {
     setLoading(true)
     const { data, error } = await supabase
       .from('reviews')
-      .select('id, overall_rating, verdict, review_type, status, author_name, author_email, created_at, p_notes, e_notes, c_notes, firms(name), designers(name)')
+      .select('id, review_number, overall_rating, verdict, review_type, status, author_name, author_email, created_at, p_notes, e_notes, c_notes, firms(name), designers(name)')
       .order('created_at', { ascending: false })
     if (error) console.error('fetch error:', error)
     setReviews(data || [])
@@ -168,7 +168,7 @@ function ReviewsManager() {
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map((r, idx) => {
-            const globalNum = tabReviews.findIndex(x => x.id === r.id) + 1
+            const globalNum = r.review_number
             return (
               <div key={r.id} className={`bg-white border rounded-xl p-4 ${activeTab === 'pending' ? 'border-amber-200' : 'border-ink-100'}`}>
                 <div className="flex items-start justify-between gap-3">
