@@ -110,7 +110,7 @@ function ReviewsManager() {
   useEffect(() => { fetchReviews() }, [])
 
   const updateStatus = async (id, status) => {
-    const { error } = await supabase.from('reviews').update({ status }).eq('id', id)
+    const { error } = await supabase.rpc('admin_update_review_status', { review_id: id, new_status: status })
     if (error) { console.error('update error:', error); alert('Error: ' + error.message); return }
     setConfirmId(null)
     fetchReviews()
