@@ -76,8 +76,8 @@ function formFromReview(r) {
     c_name: '', c_source: '', c_rating: 0, c_exp: '', c_notes: '', source_url: '',
   }
   return {
-    firm_name: r.firms?.name || '',
-    designer_name: r.designers?.name || '',
+    firm_name: r.firms?.name || r.firm_name || '',
+    designer_name: r.designers?.name || r.designer_name || '',
     overall_rating: r.overall_rating || 0,
     verdict: r.verdict || 'mixed',
     planning_rating: r.planning_rating || 0,
