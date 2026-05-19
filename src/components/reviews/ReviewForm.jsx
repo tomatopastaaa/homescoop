@@ -140,7 +140,7 @@ export default function ReviewForm({ onClose, onSuccess }) {
         author_email: user.email,
         account_created_at: user.created_at,
         review_type: 'community',
-        status: 'approved',
+        status: 'pending',
         overall_rating: form.overall_rating,
         verdict,
         tags,
