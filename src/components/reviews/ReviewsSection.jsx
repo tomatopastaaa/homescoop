@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLang } from '../../hooks/useLang'
 import ReviewBlock from './ReviewBlock'
 
-export default function ReviewsSection({ reviews = [], srcFilter, onRefresh }) {
+export default function ReviewsSection({ reviews = [], srcFilter, onRefresh, firmName, designerName }) {
   const { t } = useLang()
   const [open, setOpen] = useState(false)
 
@@ -35,7 +35,13 @@ export default function ReviewsSection({ reviews = [], srcFilter, onRefresh }) {
           {filtered.length === 0 ? (
             <p className="text-sm text-ink-400 italic py-2">{t('card.noReviews')}</p>
           ) : (
-            filtered.map(r => <ReviewBlock key={r.id} review={r} onRefresh={onRefresh} />)
+            filtered.map(r => (
+              <ReviewBlock
+                key={r.id}
+                review={{ ...r, firm_name: firmName, designer_name: designerName }}
+                onRefresh={onRefresh}
+              />
+            ))
           )}
         </div>
       )}

@@ -60,7 +60,12 @@ export default function FirmCard({ firm, linkedDesigners = [], onJumpToDesigner,
         </div>
       )}
 
-      <ReviewsSection reviews={firm.reviews || []} srcFilter={srcFilter} onRefresh={onRefresh} />
+      <ReviewsSection
+        reviews={firm.reviews || []}
+        srcFilter={srcFilter}
+        onRefresh={onRefresh}
+        firmName={firm.name}
+      />
     </div>
   )
 }

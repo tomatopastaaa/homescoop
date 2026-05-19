@@ -47,7 +47,12 @@ export default function DesignerCard({ designer, srcFilter, scrollRef, onRefresh
         </div>
       )}
 
-      <ReviewsSection reviews={designer.reviews || []} srcFilter={srcFilter} onRefresh={onRefresh} />
+      <ReviewsSection
+        reviews={designer.reviews || []}
+        srcFilter={srcFilter}
+        onRefresh={onRefresh}
+        designerName={designer.name}
+      />
     </div>
   )
 }
