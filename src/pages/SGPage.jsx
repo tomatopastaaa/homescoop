@@ -147,22 +147,6 @@ export default function SGPage() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-ink-500">{t('filters.showReviewsFrom')}</span>
-          <div className="flex border border-ink-200 rounded-lg overflow-hidden">
-            {['all','external','community'].map(s => (
-              <button key={s}
-                onClick={() => setSrcFilter(s)}
-                className={`px-3 py-1.5 text-xs transition-colors ${
-                  srcFilter === s
-                    ? 'bg-ink-900 text-white'
-                    : 'text-ink-500 hover:bg-ink-50'
-                }`}>
-                {t(`filters.source${s.charAt(0).toUpperCase() + s.slice(1)}`)}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {loading ? (
@@ -178,7 +162,7 @@ export default function SGPage() {
                 firm={firm}
                 linkedDesigners={getLinkedDesigners(firm.id)}
                 onJumpToDesigner={id => setJumpId(id)}
-                srcFilter={srcFilter}
+                srcFilter="all"
               />
             ))}
           </div>
