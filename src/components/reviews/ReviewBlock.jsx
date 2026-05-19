@@ -70,9 +70,14 @@ export default function ReviewBlock({ review, onHelpful, onFlag }) {
     { key: 'c_exp',    label: t('review.contractorExp'),  value: review.c_exp    },
   ]
 
-  const authorName = review.review_type === 'external'
-    ? (review.external_author || 'Anonymous')
-    : (review.author_name || 'Community member')
+  const maskName = (name) => {
+      if (!name) return 'Anonymous'
+      const parts = name.trim().split(' ')
+      return parts.map(p => p.charAt(0).toUpperCase() + '.').join('')
+    }
+    const authorName = review.review_type === 'external'
+      ? (review.external_author || 'Anonymous')
+      : maskName(review.author_name)
 
   return (
     <div className="py-4 border-t border-ink-100 first:border-t-0 first:pt-0">
@@ -82,7 +87,6 @@ export default function ReviewBlock({ review, onHelpful, onFlag }) {
           {review.firm_name && (
             <span className="text-xs text-ink-400">· {review.firm_name}</span>
           )}
-          <SourceChip type={review.review_type} />
           {review.review_type === 'community' && isNewAccount() && <NewAccountBadge />}
         </div>
         <span className="text-xs text-ink-400 shrink-0">
