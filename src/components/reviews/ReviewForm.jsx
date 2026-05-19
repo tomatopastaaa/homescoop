@@ -9,12 +9,8 @@ import {
 
 function Select({ id, options, value, onChange, placeholder = 'Select…' }) {
   return (
-    <select
-      id={id}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className="w-full text-sm border border-ink-200 rounded-lg px-3 py-2 bg-white text-ink-800 focus:outline-none focus:border-ink-400"
-    >
+    <select id={id} value={value} onChange={e => onChange(e.target.value)}
+      className="w-full text-sm border border-ink-200 rounded-lg px-3 py-2 bg-white text-ink-800 focus:outline-none focus:border-ink-400">
       <option value="">{placeholder}</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
@@ -38,33 +34,23 @@ function Stars({ value, onChange, size = 'lg' }) {
 function CollapsibleSection({ icon, label, color, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   const colorMap = {
-    blue:   { bg: 'bg-blue-50',   border: 'border-blue-200',   text: 'text-blue-800',   dot: 'bg-blue-400'   },
-    orange: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-800', dot: 'bg-orange-400' },
-    purple: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-800', dot: 'bg-purple-400' },
-    gray:   { bg: 'bg-ink-50',    border: 'border-ink-200',    text: 'text-ink-700',    dot: 'bg-ink-400'    },
+    blue:   { bg: 'bg-blue-50',   border: 'border-blue-200',   text: 'text-blue-800'   },
+    orange: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-800' },
+    purple: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-800' },
+    gray:   { bg: 'bg-ink-50',    border: 'border-ink-200',    text: 'text-ink-700'    },
   }
   const c = colorMap[color] || colorMap.gray
   return (
     <div className={`rounded-xl border ${c.border} overflow-hidden mt-4`}>
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className={`w-full flex items-center justify-between px-4 py-3 ${c.bg} ${c.text} font-medium text-sm`}
-      >
-        <div className="flex items-center gap-2">
-          <span>{icon}</span>
-          <span>{label}</span>
-        </div>
+      <button type="button" onClick={() => setOpen(o => !o)}
+        className={`w-full flex items-center justify-between px-4 py-3 ${c.bg} ${c.text} font-medium text-sm`}>
+        <div className="flex items-center gap-2"><span>{icon}</span><span>{label}</span></div>
         <svg className={`w-4 h-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      {open && (
-        <div className="px-4 py-4 bg-white">
-          {children}
-        </div>
-      )}
+      {open && <div className="px-4 py-4 bg-white">{children}</div>}
     </div>
   )
 }
@@ -81,22 +67,37 @@ function Field({ label, optional, children }) {
   )
 }
 
-const EMPTY_FORM = {
-  firm_name: '', designer_name: '',
-  overall_rating: 0, verdict: 'mixed',
-  planning_rating: 0,
-  p_quote: '', p_expect: '', p_comms: '', p_specs: '', p_notes: '',
-  execution_rating: 0,
-  e_visits: '', e_pm: '', e_issues: '', e_vo: '', e_cost: '',
-  e_work: '', e_defects: '', e_vs: '', e_again: '', e_notes: '',
-  c_name: '', c_source: '', c_rating: 0, c_exp: '', c_notes: '',
-  source_url: '',
+function formFromReview(r) {
+  if (!r) return {
+    firm_name: '', designer_name: '', overall_rating: 0, verdict: 'mixed',
+    planning_rating: 0, p_quote: '', p_expect: '', p_comms: '', p_specs: '', p_notes: '',
+    execution_rating: 0, e_visits: '', e_pm: '', e_issues: '', e_vo: '', e_cost: '',
+    e_work: '', e_defects: '', e_vs: '', e_again: '', e_notes: '',
+    c_name: '', c_source: '', c_rating: 0, c_exp: '', c_notes: '', source_url: '',
+  }
+  return {
+    firm_name: r.firms?.name || '',
+    designer_name: r.designers?.name || '',
+    overall_rating: r.overall_rating || 0,
+    verdict: r.verdict || 'mixed',
+    planning_rating: r.planning_rating || 0,
+    p_quote: r.p_quote || '', p_expect: r.p_expect || '',
+    p_comms: r.p_comms || '', p_specs: r.p_specs || '', p_notes: r.p_notes || '',
+    execution_rating: r.execution_rating || 0,
+    e_visits: r.e_visits || '', e_pm: r.e_pm || '', e_issues: r.e_issues || '',
+    e_vo: r.e_vo || '', e_cost: r.e_cost || '', e_work: r.e_work || '',
+    e_defects: r.e_defects || '', e_vs: r.e_vs || '', e_again: r.e_again || '', e_notes: r.e_notes || '',
+    c_name: r.c_name || '', c_source: r.c_source || '',
+    c_rating: r.c_rating || 0, c_exp: r.c_exp || '', c_notes: r.c_notes || '',
+    source_url: r.source_url || '',
+  }
 }
 
-export default function ReviewForm({ onClose, onSuccess }) {
+export default function ReviewForm({ onClose, onSuccess, existingReview }) {
   const { t } = useLang()
   const { user, signInWithGoogle } = useAuth()
-  const [form, setForm] = useState(EMPTY_FORM)
+  const isEditing = !!existingReview
+  const [form, setForm] = useState(() => formFromReview(existingReview))
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -112,65 +113,74 @@ export default function ReviewForm({ onClose, onSuccess }) {
       const tags = inferTags({ ...form, overall_rating: form.overall_rating })
       const verdict = verdictFromRating(form.overall_rating)
 
-      let firm_id = null, designer_id = null
-
-      const { data: firmData } = await supabase
-        .from('firms').select('id').ilike('name', form.firm_name.trim()).maybeSingle()
-
-      if (firmData) {
-        firm_id = firmData.id
-      } else {
-        const { data: newFirm } = await supabase
-          .from('firms').insert({ name: form.firm_name.trim(), market_id: 'sg', verdict, tags })
-          .select('id').single()
-        firm_id = newFirm?.id
-      }
-
-      if (form.designer_name.trim()) {
-        const { data: designerData } = await supabase
-          .from('designers').select('id').ilike('name', form.designer_name.trim()).maybeSingle()
-        if (designerData) {
-          designer_id = designerData.id
-        } else {
-          const { data: newDes } = await supabase
-            .from('designers').insert({ name: form.designer_name.trim(), market_id: 'sg', verdict, tags })
-            .select('id').single()
-          designer_id = newDes?.id
-          if (firm_id && designer_id) {
-            await supabase.from('designer_firm_history').insert({
-              designer_id, firm_id, firm_name: form.firm_name.trim(),
-              period: `${new Date().getFullYear()} – present`, is_current: true,
-            })
-          }
-        }
-      }
-
-      const { error: revError } = await supabase.from('reviews').insert({
-        firm_id, designer_id,
-        author_id: user.id,
-        author_name: user.user_metadata?.full_name || 'Community member',
-        author_email: user.email,
-        account_created_at: user.created_at,
-        review_type: 'community',
-        status: 'pending',
+      const reviewData = {
         overall_rating: form.overall_rating,
         verdict,
         tags,
+        planning_rating: form.planning_rating || null,
         p_quote: form.p_quote, p_expect: form.p_expect,
         p_comms: form.p_comms, p_specs: form.p_specs, p_notes: form.p_notes,
-        planning_rating: form.planning_rating || null,
+        execution_rating: form.execution_rating || null,
         e_visits: form.e_visits, e_pm: form.e_pm, e_issues: form.e_issues,
         e_vo: form.e_vo, e_cost: form.e_cost, e_work: form.e_work,
         e_defects: form.e_defects, e_vs: form.e_vs, e_again: form.e_again, e_notes: form.e_notes,
-        execution_rating: form.execution_rating || null,
         c_name: form.c_name, c_source: form.c_source,
         c_rating: form.c_rating || null, c_exp: form.c_exp, c_notes: form.c_notes,
         source_url: form.source_url,
         source_label: sourceLabelFromUrl(form.source_url),
-      })
+        status: 'pending',
+      }
 
-      if (revError?.code === '23505') { setError(t('form.alreadyReviewed')); setSubmitting(false); return }
-      if (revError) throw revError
+      if (isEditing) {
+        const { error: updErr } = await supabase
+          .from('reviews').update(reviewData).eq('id', existingReview.id)
+        if (updErr) throw updErr
+      } else {
+        let firm_id = null, designer_id = null
+
+        const { data: firmData } = await supabase
+          .from('firms').select('id').ilike('name', form.firm_name.trim()).maybeSingle()
+        if (firmData) {
+          firm_id = firmData.id
+        } else {
+          const { data: newFirm } = await supabase
+            .from('firms').insert({ name: form.firm_name.trim(), market_id: 'sg', verdict, tags })
+            .select('id').single()
+          firm_id = newFirm?.id
+        }
+
+        if (form.designer_name.trim()) {
+          const { data: designerData } = await supabase
+            .from('designers').select('id').ilike('name', form.designer_name.trim()).maybeSingle()
+          if (designerData) {
+            designer_id = designerData.id
+          } else {
+            const { data: newDes } = await supabase
+              .from('designers').insert({ name: form.designer_name.trim(), market_id: 'sg', verdict, tags })
+              .select('id').single()
+            designer_id = newDes?.id
+            if (firm_id && designer_id) {
+              await supabase.from('designer_firm_history').insert({
+                designer_id, firm_id, firm_name: form.firm_name.trim(),
+                period: `${new Date().getFullYear()} – present`, is_current: true,
+              })
+            }
+          }
+        }
+
+        const { error: revError } = await supabase.from('reviews').insert({
+          ...reviewData,
+          firm_id, designer_id,
+          author_id: user.id,
+          author_name: user.user_metadata?.full_name || 'Community member',
+          author_email: user.email,
+          account_created_at: user.created_at,
+          review_type: 'community',
+        })
+
+        if (revError?.code === '23505') { setError(t('form.alreadyReviewed')); setSubmitting(false); return }
+        if (revError) throw revError
+      }
 
       onSuccess?.()
       onClose()
@@ -201,8 +211,12 @@ export default function ReviewForm({ onClose, onSuccess }) {
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-xl">
         <div className="sticky top-0 bg-white border-b border-ink-100 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
           <div>
-            <h2 className="font-display text-xl text-ink-900">{t('form.title')}</h2>
-            <p className="text-xs text-ink-500 mt-0.5">{t('form.sub')}</p>
+            <h2 className="font-display text-xl text-ink-900">
+              {isEditing ? '✏️ Edit your review' : t('form.title')}
+            </h2>
+            <p className="text-xs text-ink-500 mt-0.5">
+              {isEditing ? 'Your updated review will be re-submitted for approval.' : t('form.sub')}
+            </p>
           </div>
           <button onClick={onClose} className="text-ink-400 hover:text-ink-900 transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,19 +226,17 @@ export default function ReviewForm({ onClose, onSuccess }) {
         </div>
 
         <div className="px-6 py-4">
-
-          {/* Basic Info — always open */}
           <CollapsibleSection icon="🏢" label="Basic info" color="gray" defaultOpen={true}>
             <div className="grid grid-cols-2 gap-3">
               <Field label={`${t('form.firmName')} *`}>
                 <input type="text" value={form.firm_name} onChange={setRaw('firm_name')}
-                  placeholder={t('form.firmPlaceholder')}
-                  className="w-full text-sm border border-ink-200 rounded-lg px-3 py-2 focus:outline-none focus:border-ink-400" />
+                  placeholder={t('form.firmPlaceholder')} disabled={isEditing}
+                  className="w-full text-sm border border-ink-200 rounded-lg px-3 py-2 focus:outline-none focus:border-ink-400 disabled:bg-ink-50 disabled:text-ink-400" />
               </Field>
               <Field label={t('form.designerName')} optional>
                 <input type="text" value={form.designer_name} onChange={setRaw('designer_name')}
-                  placeholder={t('form.designerPlaceholder')}
-                  className="w-full text-sm border border-ink-200 rounded-lg px-3 py-2 focus:outline-none focus:border-ink-400" />
+                  placeholder={t('form.designerPlaceholder')} disabled={isEditing}
+                  className="w-full text-sm border border-ink-200 rounded-lg px-3 py-2 focus:outline-none focus:border-ink-400 disabled:bg-ink-50 disabled:text-ink-400" />
               </Field>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -232,14 +244,12 @@ export default function ReviewForm({ onClose, onSuccess }) {
                 <Stars value={form.overall_rating} onChange={set('overall_rating')} />
               </Field>
               <Field label={t('form.verdict')}>
-                <Select id="verdict" value={form.verdict} onChange={set('verdict')}
-                  options={['good','mixed','bad']} />
+                <Select id="verdict" value={form.verdict} onChange={set('verdict')} options={['good','mixed','bad']} />
               </Field>
             </div>
           </CollapsibleSection>
 
-          {/* Planning Stage */}
-          <CollapsibleSection icon="📋" label="Planning stage" color="blue">
+          <CollapsibleSection icon="📋" label="Planning stage" color="blue" defaultOpen={isEditing}>
             <Field label="Planning rating" optional>
               <Stars value={form.planning_rating} onChange={set('planning_rating')} size="sm" />
             </Field>
@@ -264,8 +274,7 @@ export default function ReviewForm({ onClose, onSuccess }) {
             </Field>
           </CollapsibleSection>
 
-          {/* Execution Stage */}
-          <CollapsibleSection icon="🔨" label="Execution stage" color="orange">
+          <CollapsibleSection icon="🔨" label="Execution stage" color="orange" defaultOpen={isEditing}>
             <Field label="Execution rating" optional>
               <Stars value={form.execution_rating} onChange={set('execution_rating')} size="sm" />
             </Field>
@@ -305,8 +314,7 @@ export default function ReviewForm({ onClose, onSuccess }) {
             </Field>
           </CollapsibleSection>
 
-          {/* Contractor */}
-          <CollapsibleSection icon="🛠" label="Contractor" color="purple">
+          <CollapsibleSection icon="🛠" label="Contractor" color="purple" defaultOpen={isEditing}>
             <div className="grid grid-cols-2 gap-3">
               <Field label={t('form.contractorName')} optional>
                 <input type="text" value={form.c_name} onChange={setRaw('c_name')}
@@ -330,8 +338,7 @@ export default function ReviewForm({ onClose, onSuccess }) {
             </Field>
           </CollapsibleSection>
 
-          {/* Source */}
-          <CollapsibleSection icon="🔗" label="Source link" color="gray">
+          <CollapsibleSection icon="🔗" label="Source link" color="gray" defaultOpen={isEditing && !!form.source_url}>
             <Field label={t('form.sourceLink')} optional>
               <input type="text" value={form.source_url} onChange={setRaw('source_url')}
                 placeholder={t('form.sourcePlaceholder')}
@@ -341,9 +348,7 @@ export default function ReviewForm({ onClose, onSuccess }) {
           </CollapsibleSection>
 
           {error && (
-            <div className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              {error}
-            </div>
+            <div className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</div>
           )}
 
           <div className="flex gap-3 mt-5 pb-2">
@@ -353,7 +358,7 @@ export default function ReviewForm({ onClose, onSuccess }) {
             </button>
             <button onClick={handleSubmit} disabled={submitting}
               className="flex-1 py-2.5 bg-ink-900 text-white rounded-xl text-sm font-medium hover:bg-ink-700 transition-colors disabled:opacity-50">
-              {submitting ? '…' : t('form.submit')}
+              {submitting ? '…' : isEditing ? 'Save changes' : t('form.submit')}
             </button>
           </div>
         </div>

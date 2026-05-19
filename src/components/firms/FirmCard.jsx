@@ -2,7 +2,7 @@ import { useLang } from '../../hooks/useLang'
 import { VerdictBadge, TagBadge, StarDisplay } from '../common/Badges'
 import ReviewsSection from '../reviews/ReviewsSection'
 
-export default function FirmCard({ firm, linkedDesigners = [], onJumpToDesigner, srcFilter }) {
+export default function FirmCard({ firm, linkedDesigners = [], onJumpToDesigner, srcFilter, onRefresh }) {
   const { t } = useLang()
   const good = linkedDesigners.filter(d => d.verdict === 'good').length
   const bad = linkedDesigners.filter(d => d.verdict === 'bad').length
@@ -46,17 +46,12 @@ export default function FirmCard({ firm, linkedDesigners = [], onJumpToDesigner,
           </div>
           <div className="flex flex-wrap gap-1.5">
             {linkedDesigners.map(d => (
-              <button
-                key={d.id}
-                onClick={() => onJumpToDesigner(d.id)}
+              <button key={d.id} onClick={() => onJumpToDesigner(d.id)}
                 className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                  d.verdict === 'good'
-                    ? 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
-                    : d.verdict === 'bad'
-                    ? 'border-red-300 text-red-700 hover:bg-red-50'
-                    : 'border-ink-200 text-ink-600 hover:bg-ink-50'
-                }`}
-              >
+                  d.verdict === 'good' ? 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
+                  : d.verdict === 'bad' ? 'border-red-300 text-red-700 hover:bg-red-50'
+                  : 'border-ink-200 text-ink-600 hover:bg-ink-50'
+                }`}>
                 {d.name} {d.verdict === 'good' ? '✓' : d.verdict === 'bad' ? '✗' : '~'}
               </button>
             ))}
@@ -65,7 +60,7 @@ export default function FirmCard({ firm, linkedDesigners = [], onJumpToDesigner,
         </div>
       )}
 
-      <ReviewsSection reviews={firm.reviews || []} srcFilter={srcFilter} />
+      <ReviewsSection reviews={firm.reviews || []} srcFilter={srcFilter} onRefresh={onRefresh} />
     </div>
   )
 }

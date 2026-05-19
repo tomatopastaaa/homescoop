@@ -10,9 +10,8 @@ const TAGS = ['delay','workmanship','comms','overcharge','ghost','quality','resp
 
 export default function SGPage() {
   const { t } = useLang()
-  const { user, signInWithGoogle } = useAuth()
+  const { user } = useAuth()
   const [tab, setTab] = useState('firms')
-  const [srcFilter, setSrcFilter] = useState('all')
   const [firms, setFirms] = useState([])
   const [designers, setDesigners] = useState([])
   const [loading, setLoading] = useState(true)
@@ -27,10 +26,10 @@ export default function SGPage() {
     setLoading(true)
     const [firmsRes, designersRes] = await Promise.all([
       supabase.from('firms').select(`
-        *, reviews(*)
-      `).eq('market_id', 'sg').in('reviews.status', ['pending','approved']).order('review_count', { ascending: false }),
+        *, reviews(*, author_id, planning_rating, execution_rating)
+      `).eq('market_id', 'sg').order('review_count', { ascending: false }),
       supabase.from('designers').select(`
-        *, reviews(*), firm_history:designer_firm_history(*)
+        *, reviews(*, author_id, planning_rating, execution_rating), firm_history:designer_firm_history(*)
       `).eq('market_id', 'sg').order('created_at', { ascending: false }),
     ])
     setFirms(firmsRes.data || [])
@@ -74,7 +73,6 @@ export default function SGPage() {
 
   const totalReviews = [...firms, ...designers].reduce((s, x) => s + (x.reviews?.length || 0), 0)
   const movedCount = designers.filter(d => d.firm_history?.length > 1).length
-
   const goodFirms = firms.filter(f => f.verdict === 'good').length
   const badFirms = firms.filter(f => f.verdict === 'bad').length
   const goodIds = designers.filter(d => d.verdict === 'good').length
@@ -83,18 +81,16 @@ export default function SGPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="font-display text-4xl text-ink-900 leading-tight">
-          {t('home.tagline')}
-        </h1>
+        <h1 className="font-display text-4xl text-ink-900 leading-tight">{t('home.tagline')}</h1>
         <p className="text-ink-500 mt-2">{t('home.sub')}</p>
       </div>
 
       <div className="grid grid-cols-4 gap-3 mb-8">
         {[
-          { val: firms.length, label: `${t('stats.firms')} · `, extra: `${goodFirms} ${t('stats.rec')} / ${badFirms} ${t('stats.avoid')}`, color: '' },
-          { val: designers.length, label: `${t('stats.ids')} · `, extra: `${goodIds} ${t('stats.rec')} / ${badIds} ${t('stats.avoid')}`, color: '' },
+          { val: firms.length, label: `${t('stats.firms')} · `, extra: `${goodFirms} ${t('stats.rec')} / ${badFirms} ${t('stats.avoid')}` },
+          { val: designers.length, label: `${t('stats.ids')} · `, extra: `${goodIds} ${t('stats.rec')} / ${badIds} ${t('stats.avoid')}` },
           { val: movedCount, label: t('stats.moved'), extra: '', color: 'text-amber-600' },
-          { val: totalReviews, label: t('stats.reviews'), extra: '', color: '' },
+          { val: totalReviews, label: t('stats.reviews'), extra: '' },
         ].map((s, i) => (
           <div key={i} className="bg-ink-50 rounded-xl p-4">
             <div className={`text-2xl font-display font-medium ${s.color || 'text-ink-900'}`}>{s.val}</div>
@@ -107,11 +103,9 @@ export default function SGPage() {
       </div>
 
       <div className="flex flex-wrap gap-3 mb-4">
-        <input
-          type="text" value={search} onChange={e => setSearch(e.target.value)}
+        <input type="text" value={search} onChange={e => setSearch(e.target.value)}
           placeholder={t('home.searchPlaceholder')}
-          className="flex-1 min-w-48 text-sm border border-ink-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-ink-400"
-        />
+          className="flex-1 min-w-48 text-sm border border-ink-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-ink-400" />
         <select value={verdictFilter} onChange={e => setVerdictFilter(e.target.value)}
           className="text-sm border border-ink-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-ink-400">
           <option value="">{t('filters.allVerdicts')}</option>
@@ -136,12 +130,9 @@ export default function SGPage() {
       <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div className="flex border-b border-ink-100">
           {['firms', 'ids'].map(t_ => (
-            <button key={t_}
-              onClick={() => setTab(t_)}
+            <button key={t_} onClick={() => setTab(t_)}
               className={`px-4 py-2 text-sm capitalize transition-colors border-b-2 ${
-                tab === t_
-                  ? 'border-ink-900 text-ink-900 font-medium'
-                  : 'border-transparent text-ink-400 hover:text-ink-700'
+                tab === t_ ? 'border-ink-900 text-ink-900 font-medium' : 'border-transparent text-ink-400 hover:text-ink-700'
               }`}>
               {t(`nav.${t_}`)}
             </button>
@@ -157,12 +148,11 @@ export default function SGPage() {
         ) : (
           <div className="flex flex-col gap-4">
             {filteredFirms.map(firm => (
-              <FirmCard
-                key={firm.id}
-                firm={firm}
+              <FirmCard key={firm.id} firm={firm}
                 linkedDesigners={getLinkedDesigners(firm.id)}
                 onJumpToDesigner={id => setJumpId(id)}
                 srcFilter="all"
+                onRefresh={fetchData}
               />
             ))}
           </div>
@@ -173,11 +163,10 @@ export default function SGPage() {
         ) : (
           <div className="flex flex-col gap-4">
             {filteredDesigners.map(d => (
-              <DesignerCard
-                key={d.id}
-                designer={d}
-                srcFilter={srcFilter}
+              <DesignerCard key={d.id} designer={d}
+                srcFilter="all"
                 scrollRef={el => { designerRefs.current[d.id] = el }}
+                onRefresh={fetchData}
               />
             ))}
           </div>

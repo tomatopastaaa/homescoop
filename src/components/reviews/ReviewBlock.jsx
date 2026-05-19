@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useLang } from '../../hooks/useLang'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabase'
-import { StarDisplay, MetricItem, SourceChip, NewAccountBadge, SourceLink, TagBadge } from '../common/Badges'
+import { StarDisplay, MetricItem, SourceLink, NewAccountBadge } from '../common/Badges'
+import ReviewForm from './ReviewForm'
 
 function StageSection({ label, icon, fields }) {
   const visible = fields.filter(f => f.value)
@@ -32,13 +33,16 @@ function PhaseRating({ label, rating }) {
   )
 }
 
-export default function ReviewBlock({ review }) {
+export default function ReviewBlock({ review, onRefresh }) {
   const { t } = useLang()
   const { user } = useAuth()
   const [helpful, setHelpful] = useState(review.helpful_count || 0)
   const [voted, setVoted] = useState(false)
   const [flagged, setFlagged] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [editing, setEditing] = useState(false)
+
+  const isOwner = user && review.author_id === user.id
 
   const isNewAccount = () => {
     if (!review.account_created_at) return false
@@ -59,10 +63,10 @@ export default function ReviewBlock({ review }) {
   }
 
   const planningFields = [
-    { key: 'p_quote',  label: t('review.quoteDetail'),   value: review.p_quote  },
-    { key: 'p_expect', label: t('review.expectations'),  value: review.p_expect },
-    { key: 'p_comms',  label: t('review.designComms'),   value: review.p_comms  },
-    { key: 'p_specs',  label: t('review.materialSpecs'), value: review.p_specs  },
+    { key: 'p_quote',  label: t('review.quoteDetail'),    value: review.p_quote  },
+    { key: 'p_expect', label: t('review.expectations'),   value: review.p_expect },
+    { key: 'p_comms',  label: t('review.designComms'),    value: review.p_comms  },
+    { key: 'p_specs',  label: t('review.materialSpecs'),  value: review.p_specs  },
   ]
 
   const executionFields = [
@@ -98,104 +102,116 @@ export default function ReviewBlock({ review }) {
     : maskName(review.author_name)
 
   return (
-    <div className="py-4 border-t border-ink-100 first:border-t-0 first:pt-0">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-ink-800">{authorName}</span>
-          {review.firm_name && <span className="text-xs text-ink-400">· {review.firm_name}</span>}
-          {review.review_type === 'community' && isNewAccount() && <NewAccountBadge />}
-        </div>
-        <span className="text-xs text-ink-400 shrink-0">
-          {new Date(review.created_at).toLocaleDateString('en-SG', { month: 'short', year: 'numeric' })}
-        </span>
-      </div>
-
-      {/* Overall rating + review number */}
-      <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-        <StarDisplay rating={review.overall_rating} />
-        {review.review_number && (
-          <span className="text-xs font-mono bg-ink-100 text-ink-500 px-2 py-0.5 rounded">
-            #{review.review_number}
+    <>
+      <div className="py-4 border-t border-ink-100 first:border-t-0 first:pt-0">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-ink-800">{authorName}</span>
+            {review.firm_name && <span className="text-xs text-ink-400">· {review.firm_name}</span>}
+            {review.review_type === 'community' && isNewAccount() && <NewAccountBadge />}
+            {isOwner && (
+              <span className="text-xs bg-scoop-100 text-scoop-700 px-2 py-0.5 rounded-full font-medium">
+                Your review
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-ink-400 shrink-0">
+            {new Date(review.created_at).toLocaleDateString('en-SG', { month: 'short', year: 'numeric' })}
           </span>
+        </div>
+
+        {/* Overall rating + review number */}
+        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+          <StarDisplay rating={review.overall_rating} />
+          {review.review_number && (
+            <span className="text-xs font-mono bg-ink-100 text-ink-500 px-2 py-0.5 rounded">
+              #{review.review_number}
+            </span>
+          )}
+        </div>
+
+        {/* Phase ratings */}
+        {(review.planning_rating || review.execution_rating) && (
+          <div className="mt-2 flex flex-wrap gap-3">
+            <PhaseRating label="📋 Planning" rating={review.planning_rating} />
+            <PhaseRating label="🔨 Execution" rating={review.execution_rating} />
+          </div>
         )}
-      </div>
 
-      {/* Phase ratings — always visible */}
-      {(review.planning_rating || review.execution_rating) && (
-        <div className="mt-2 flex flex-wrap gap-3">
-          <PhaseRating label="📋 Planning" rating={review.planning_rating} />
-          <PhaseRating label="🔨 Execution" rating={review.execution_rating} />
-        </div>
-      )}
+        {/* Preview text */}
+        {review.e_notes && (
+          <p className="mt-2 text-sm text-ink-600 leading-relaxed line-clamp-3">{review.e_notes}</p>
+        )}
+        {!review.e_notes && review.p_notes && (
+          <p className="mt-2 text-sm text-ink-600 leading-relaxed line-clamp-3">{review.p_notes}</p>
+        )}
 
-      {/* Free text notes — always visible as summary */}
-      {review.e_notes && (
-        <p className="mt-2 text-sm text-ink-600 leading-relaxed line-clamp-3">{review.e_notes}</p>
-      )}
-      {!review.e_notes && review.p_notes && (
-        <p className="mt-2 text-sm text-ink-600 leading-relaxed line-clamp-3">{review.p_notes}</p>
-      )}
-
-      {/* Expand/collapse full review */}
-      {hasDetailedContent && (
-        <button
-          onClick={() => setExpanded(o => !o)}
-          className="mt-2 text-xs text-scoop-600 hover:text-scoop-800 flex items-center gap-1 font-medium transition-colors"
-        >
-          {expanded ? 'Hide full review ↑' : 'View full review ↓'}
-        </button>
-      )}
-
-      {/* Full review detail — expanded only */}
-      {expanded && (
-        <div className="mt-3 bg-ink-50 rounded-xl p-3">
-          <StageSection label={t('review.planning')} icon="📋" fields={planningFields} />
-          {review.p_notes && (
-            <p className="mt-2 text-xs text-ink-500 italic leading-relaxed">{review.p_notes}</p>
-          )}
-          <StageSection label={t('review.execution')} icon="🔨" fields={executionFields} />
-          {review.e_notes && (
-            <p className="mt-2 text-xs text-ink-500 italic leading-relaxed">{review.e_notes}</p>
-          )}
-          <StageSection label={t('review.contractor')} icon="🛠" fields={contractorFields} />
-          {review.c_name && (
-            <div className="mt-2 inline-flex items-center gap-1.5 text-xs text-ink-600 border border-ink-200 px-2.5 py-1 rounded-full">
-              🔧 {review.c_name}
-              {review.c_rating && (
-                <span className="text-amber-400">{Array(review.c_rating).fill('★').join('')}</span>
-              )}
-            </div>
-          )}
-          {review.c_notes && (
-            <p className="mt-2 text-xs text-ink-500 italic leading-relaxed">{review.c_notes}</p>
-          )}
-        </div>
-      )}
-
-      {/* Footer actions */}
-      <div className="mt-3 flex items-center gap-3 flex-wrap">
-        <SourceLink url={review.source_url} />
-        <button
-          onClick={handleHelpful}
-          disabled={!user || voted}
-          className={`text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-colors ${
-            voted
-              ? 'border-emerald-300 text-emerald-700 bg-emerald-50'
-              : 'border-ink-200 text-ink-500 hover:border-ink-400 hover:text-ink-700'
-          } disabled:opacity-40`}
-        >
-          👍 {t('card.helpful')} · {helpful} {t('card.foundHelpful')}
-        </button>
-        {!flagged ? (
-          <button onClick={handleFlag} disabled={!user}
-            className="text-xs text-ink-400 hover:text-red-500 transition-colors disabled:opacity-40">
-            {t('card.flag')}
+        {/* Expand full review */}
+        {hasDetailedContent && (
+          <button
+            onClick={() => setExpanded(o => !o)}
+            className="mt-2 text-xs text-scoop-600 hover:text-scoop-800 flex items-center gap-1 font-medium transition-colors"
+          >
+            {expanded ? 'Hide full review ↑' : 'View full review ↓'}
           </button>
-        ) : (
-          <span className="text-xs text-red-400">Flagged</span>
         )}
+
+        {expanded && (
+          <div className="mt-3 bg-ink-50 rounded-xl p-3">
+            <StageSection label={t('review.planning')} icon="📋" fields={planningFields} />
+            {review.p_notes && <p className="mt-2 text-xs text-ink-500 italic leading-relaxed">{review.p_notes}</p>}
+            <StageSection label={t('review.execution')} icon="🔨" fields={executionFields} />
+            {review.e_notes && <p className="mt-2 text-xs text-ink-500 italic leading-relaxed">{review.e_notes}</p>}
+            <StageSection label={t('review.contractor')} icon="🛠" fields={contractorFields} />
+            {review.c_name && (
+              <div className="mt-2 inline-flex items-center gap-1.5 text-xs text-ink-600 border border-ink-200 px-2.5 py-1 rounded-full">
+                🔧 {review.c_name}
+                {review.c_rating && <span className="text-amber-400">{Array(review.c_rating).fill('★').join('')}</span>}
+              </div>
+            )}
+            {review.c_notes && <p className="mt-2 text-xs text-ink-500 italic leading-relaxed">{review.c_notes}</p>}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="mt-3 flex items-center gap-3 flex-wrap">
+          <SourceLink url={review.source_url} />
+          <button
+            onClick={handleHelpful}
+            disabled={!user || voted}
+            className={`text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-colors ${
+              voted ? 'border-emerald-300 text-emerald-700 bg-emerald-50' : 'border-ink-200 text-ink-500 hover:border-ink-400 hover:text-ink-700'
+            } disabled:opacity-40`}
+          >
+            👍 {t('card.helpful')} · {helpful} {t('card.foundHelpful')}
+          </button>
+          {isOwner && (
+            <button
+              onClick={() => setEditing(true)}
+              className="text-xs text-blue-600 hover:text-blue-800 transition-colors font-medium"
+            >
+              ✏️ Edit my review
+            </button>
+          )}
+          {!flagged ? (
+            <button onClick={handleFlag} disabled={!user || isOwner}
+              className="text-xs text-ink-400 hover:text-red-500 transition-colors disabled:opacity-40">
+              {t('card.flag')}
+            </button>
+          ) : (
+            <span className="text-xs text-red-400">Flagged</span>
+          )}
+        </div>
       </div>
-    </div>
+
+      {editing && (
+        <ReviewForm
+          existingReview={review}
+          onClose={() => setEditing(false)}
+          onSuccess={() => { setEditing(false); onRefresh?.() }}
+        />
+      )}
+    </>
   )
 }

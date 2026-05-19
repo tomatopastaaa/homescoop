@@ -2,7 +2,7 @@ import { useLang } from '../../hooks/useLang'
 import { VerdictBadge, TagBadge } from '../common/Badges'
 import ReviewsSection from '../reviews/ReviewsSection'
 
-export default function DesignerCard({ designer, srcFilter, scrollRef }) {
+export default function DesignerCard({ designer, srcFilter, scrollRef, onRefresh }) {
   const { t } = useLang()
   const hasMoved = designer.firm_history?.length > 1
 
@@ -38,11 +38,7 @@ export default function DesignerCard({ designer, srcFilter, scrollRef }) {
                 <span className={`w-2 h-2 rounded-full shrink-0 ${h.is_current ? 'bg-emerald-500' : 'bg-ink-200'}`} />
                 <span className="font-medium text-ink-800">{h.firm_name}</span>
                 <span className="text-ink-400 text-xs">{h.period}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded ${
-                  h.is_current
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : 'bg-ink-50 text-ink-500'
-                }`}>
+                <span className={`text-xs px-1.5 py-0.5 rounded ${h.is_current ? 'bg-emerald-50 text-emerald-700' : 'bg-ink-50 text-ink-500'}`}>
                   {h.is_current ? t('card.current') : t('card.former')}
                 </span>
               </div>
@@ -51,7 +47,7 @@ export default function DesignerCard({ designer, srcFilter, scrollRef }) {
         </div>
       )}
 
-      <ReviewsSection reviews={designer.reviews || []} srcFilter={srcFilter} />
+      <ReviewsSection reviews={designer.reviews || []} srcFilter={srcFilter} onRefresh={onRefresh} />
     </div>
   )
 }
