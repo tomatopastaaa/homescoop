@@ -90,8 +90,8 @@ export default function ReviewBlock({ review, onHelpful, onFlag }) {
         </span>
       </div>
 
-      <div className="mt-1.5">
-        <StarDisplay rating={review.overall_rating} />
+      <div className="mt-1.5 flex items-center gap-2">
+        <StarDisplay rating={review.overall_rating} />{review.review_number && <span className="text-xs font-mono bg-ink-100 text-ink-500 px-2 py-0.5 rounded">#{review.review_number}</span>}
       </div>
 
       <StageSection
