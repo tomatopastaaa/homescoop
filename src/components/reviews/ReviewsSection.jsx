@@ -22,11 +22,7 @@ export default function ReviewsSection({ reviews = [], srcFilter }) {
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-ink-700">{t('card.reviews')}</span>
           <div className="flex items-center gap-2 text-xs text-ink-400">
-            <span>{filtered.length} shown</span>
-            <span>·</span>
-            <span className="text-blue-600">{extCount} external</span>
-            <span>·</span>
-            <span className="text-emerald-600">{comCount} community</span>
+            <span>{filtered.length} review{filtered.length !== 1 ? 's' : ''}</span>
           </div>
         </div>
         <svg
